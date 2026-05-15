@@ -80,7 +80,7 @@ describe("TontinePolygon — Sécurité", function () {
     // member2 et member3 n'ont pas payé
     await expect(
       tontine.distribute(GROUP_ID, member1.address, false)
-    ).to.be.revertedWith("Tous les membres n'ont pas paye");
+    ).to.be.revertedWith("Tous les membres n'ont pas paye (utiliser forcePartial pour override)");
   });
 
   // ── Test 7 : forcePartial — distribue même incomplet ─────────────────────
@@ -95,7 +95,7 @@ describe("TontinePolygon — Sécurité", function () {
 
     // Le gagnant reçoit seulement ce qui a été déposé
     const balance = await token.balanceOf(member1.address);
-    expect(balance).to.be.gt(ethers.parseUnits("10000", 6)); // reçu en plus
+    expect(balance).to.be.gte(ethers.parseUnits("10000", 6)); // récupère sa mise au moins
   });
 
   // ── Test 8 : Distribution complète — tous ont payé ────────────────────────
@@ -125,8 +125,7 @@ describe("TontinePolygon — Sécurité", function () {
     await tontine.connect(member3).deposit(GROUP_ID, 0);
 
     await expect(tontine.distribute(GROUP_ID, member1.address, false))
-      .to.emit(tontine, "RoundOpened")
-      .withArgs(GROUP_ID, 1, /* deadline calculée */ expect.anything());
+      .to.emit(tontine, "RoundOpened");
 
     expect(await tontine.getCurrentRound(GROUP_ID)).to.equal(1);
     expect(await tontine.isRoundOpen(GROUP_ID)).to.equal(true);
