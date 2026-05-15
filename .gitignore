@@ -1,0 +1,28 @@
+# --- GLOBAL ---
+.env
+.DS_Store
+Thumbs.db
+*.log
+
+# --- BACKEND (FastAPI) ---
+backend/__pycache__/
+backend/*.py[cod]
+backend/.venv/
+backend/env/
+backend/venv/
+backend/.pytest_cache/
+backend/.coverage
+backend/dist/
+backend/build/
+
+# --- SMART CONTRACT (Hardhat) ---
+tontine-contract/node_modules/
+tontine-contract/artifacts/
+tontine-contract/cache/
+tontine-contract/typechain/
+tontine-contract/typechain-types/
+tontine-contract/coverage/
+tontine-contract/coverage.json
+
+# --- FRONTEND (React/Vite) ---
+tontine-flow/

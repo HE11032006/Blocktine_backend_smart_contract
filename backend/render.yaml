@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: tontine-flow-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tontine-db
+          property: connectionString
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: KOTANI_API_KEY
+        sync: false
+      - key: KOTANI_WEBHOOK_SECRET
+        sync: false
+      - key: PAYMENT_MODE
+        value: mock
+      - key: POLYGON_RPC_URL
+        value: https://rpc-amoy.polygon.technology
+      - key: PRIVATE_KEY
+        sync: false
+      - key: CONTRACT_ADDRESS
+        sync: false
+
+databases:
+  - name: tontine-db
+    plan: free
