@@ -106,8 +106,12 @@ def _process_single_job(job_id: str) -> None:
             and payment.group.contract_group_id is not None
         ):
             try:
+                # Récupérer le numéro du tour (round) pour la sécurité anti-replay
+                expected_round = payment.round.round_number if payment.round else 0
+
                 tx_hash = blockchain.deposit(
-                    group_id=payment.group.contract_group_id
+                    group_id=payment.group.contract_group_id,
+                    expected_round=expected_round
                 )
                 payment.tx_hash = tx_hash
                 logger.info(f"[Blockchain] Dépôt tx: {tx_hash}")

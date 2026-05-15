@@ -2,6 +2,7 @@ services:
   - type: web
     name: tontine-flow-api
     runtime: python
+    rootDirectory: backend
     buildCommand: pip install -r requirements.txt && alembic upgrade head
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:

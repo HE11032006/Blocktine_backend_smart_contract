@@ -163,21 +163,22 @@ def start_group(
         # Fréquence en secondes
         frequency_sec = group.frequency_days * 24 * 3600
 
+        # Conversion de l'UUID du groupe en uint256 pour la blockchain
+        group_id_uint = int(group.id.hex, 16)
+        
+        # Deadline du premier tour : maintenant + fréquence
+        first_deadline = int((datetime.utcnow() + timedelta(days=group.frequency_days)).timestamp())
+
         tx_hash = blockchain.create_group_on_chain(
+            group_id_uint=group_id_uint,
             amount_usdc_wei=amount_wei,
-            frequency=frequency_sec,
-            member_addresses=member_addresses
+            interval_seconds=frequency_sec,
+            member_addresses=member_addresses,
+            first_deadline=first_deadline
         )
 
-        # On attend pas la confirmation pour pas bloquer l'API, 
-        # mais dans un vrai projet on utiliserait un worker.
-        # Ici on va juste supposer que l'ID sera le prochain index (risqué si concurrent)
-        # Idéalement le contrat devrait émettre un event que le backend écoute.
-        
-        # Pour la démo, on simule l'ID du contrat
-        # On pourrait aussi appeler une fonction view du contrat pour avoir le nextGroupId
-        # Mais pour faire simple :
-        group.contract_group_id = 0 # À mettre à jour via event listener ou manuellement
+        # On stocke l'ID utilisé sur la blockchain
+        group.contract_group_id = group_id_uint
         db.commit()
         db.refresh(group)
         return group

@@ -3,36 +3,45 @@ import secrets
 from web3 import Web3
 from app.config import settings
 
-# ABI mis à jour — reflète TontinePolygon v2 (nonce anti-replay + deadline)
+# ABI complète — reflète TontinePolygon v2 (Robuste)
 TONTINE_ABI = json.loads("""
 [
   {
     "inputs": [
-      {"internalType": "uint256", "name": "_amountPerMember", "type": "uint256"},
-      {"internalType": "uint256", "name": "_frequency", "type": "uint256"},
-      {"internalType": "address[]", "name": "_members", "type": "address[]"}
+      {"internalType": "uint256", "name": "groupId", "type": "uint256"},
+      {"internalType": "address[]", "name": "members", "type": "address[]"},
+      {"internalType": "uint256", "name": "amountPerMember", "type": "uint256"},
+      {"internalType": "uint256", "name": "intervalSeconds", "type": "uint256"},
+      {"internalType": "uint256", "name": "firstDeadline", "type": "uint256"}
     ],
     "name": "createGroup",
-    "outputs": [{"internalType": "uint256", "name": "groupId", "type": "uint256"}],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [{"internalType": "uint256", "name": "_groupId", "type": "uint256"}],
+    "inputs": [
+      {"internalType": "uint256", "name": "groupId", "type": "uint256"},
+      {"internalType": "uint256", "name": "expectedRound", "type": "uint256"}
+    ],
     "name": "deposit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [{"internalType": "uint256", "name": "_groupId", "type": "uint256"}],
+    "inputs": [
+      {"internalType": "uint256", "name": "groupId", "type": "uint256"},
+      {"internalType": "address", "name": "winner", "type": "address"},
+      {"internalType": "bool", "name": "forcePartial", "type": "bool"}
+    ],
     "name": "distribute",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [{"internalType": "uint256", "name": "_groupId", "type": "uint256"}],
+    "inputs": [{"internalType": "uint256", "name": "groupId", "type": "uint256"}],
     "name": "getCurrentRound",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
@@ -40,12 +49,22 @@ TONTINE_ABI = json.loads("""
   },
   {
     "inputs": [
-      {"internalType": "uint256", "name": "_groupId", "type": "uint256"},
-      {"internalType": "address", "name": "_member", "type": "address"},
-      {"internalType": "uint256", "name": "_round", "type": "uint256"}
+      {"internalType": "uint256", "name": "groupId", "type": "uint256"},
+      {"internalType": "uint256", "name": "round", "type": "uint256"},
+      {"internalType": "address", "name": "member", "type": "address"}
     ],
     "name": "hasMemberPaid",
     "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "groupId", "type": "uint256"},
+      {"internalType": "address", "name": "member", "type": "address"}
+    ],
+    "name": "getMemberNonce",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
     "type": "function"
   }
@@ -110,32 +129,40 @@ class BlockchainService:
 
     def create_group_on_chain(
         self,
+        group_id_uint: int,
         amount_usdc_wei: int,
-        frequency: int,
+        interval_seconds: int,
         member_addresses: list[str],
+        first_deadline: int,
     ) -> str:
         checksummed = [Web3.to_checksum_address(a) for a in member_addresses]
         fn = self.contract.functions.createGroup(
-            amount_usdc_wei,
-            frequency,
+            group_id_uint,
             checksummed,
+            amount_usdc_wei,
+            interval_seconds,
+            first_deadline,
         )
         return self._send_transaction(fn)
 
-    def deposit(self, group_id: int) -> str:
-        """Dépose le montant pour le groupe spécifié."""
+    def deposit(self, group_id: int, expected_round: int) -> str:
+        """Dépose le montant pour le groupe spécifié avec vérification du round."""
         if settings.payment_mode == "mock":
-            try:
-                return self._send_transaction(fn)
-            except Exception:
-                return "0xMOCK_TX_HASH_" + secrets.token_hex(16)
+            return "0xMOCK_TX_HASH_" + secrets.token_hex(16)
         
-        fn = self.contract.functions.deposit(group_id)
+        fn = self.contract.functions.deposit(group_id, expected_round)
         return self._send_transaction(fn)
 
-    def distribute(self, group_id: int) -> str:
-        """Distribue les fonds du tour actuel."""
-        fn = self.contract.functions.distribute(group_id)
+    def distribute(self, group_id: int, winner_address: str, force_partial: bool = False) -> str:
+        """Distribue les fonds au gagnant."""
+        if settings.payment_mode == "mock":
+            return "0xMOCK_TX_HASH_" + secrets.token_hex(16)
+
+        fn = self.contract.functions.distribute(
+            group_id, 
+            Web3.to_checksum_address(winner_address), 
+            force_partial
+        )
         return self._send_transaction(fn)
 
     def get_balance_usdc(self, wallet_address: str) -> str:
@@ -159,9 +186,10 @@ class BlockchainService:
     def has_member_paid(self, group_id: int, member_address: str, round_number: int) -> bool:
         return self.contract.functions.hasMemberPaid(
             group_id,
-            Web3.to_checksum_address(member_address),
-            round_number
+            round_number,
+            Web3.to_checksum_address(member_address)
         ).call()
+
 
     def is_connected(self) -> bool:
         return self.w3.is_connected()
