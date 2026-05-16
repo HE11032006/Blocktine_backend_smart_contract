@@ -148,7 +148,7 @@ def initiate_payment(
 
     kotani_response = payment_service.initiate_fiat_to_crypto(
         amount_fcfa=group.amount_fcfa,
-        phone_number=current_user.phone_number,
+        phone_number=payload.phone_number,
         wallet_address=blockchain.account.address,
         tx_ref=tx_ref,
     )
@@ -174,7 +174,7 @@ def initiate_payment(
     # Mode mock : simuler le webhook automatiquement
     if settings.payment_mode == "mock":
         background_tasks.add_task(
-            simulate_mock_webhook, tx_ref, current_user.phone_number
+            simulate_mock_webhook, tx_ref, payload.phone_number
         )
 
     return payment
