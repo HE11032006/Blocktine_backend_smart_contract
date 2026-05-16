@@ -50,6 +50,26 @@ TONTINE_ABI = json.loads("""
   {
     "inputs": [
       {"internalType": "uint256", "name": "groupId", "type": "uint256"},
+      {"internalType": "uint256", "name": "round", "type": "uint256"}
+    ],
+    "name": "getRoundBalance",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "groupId", "type": "uint256"},
+      {"internalType": "uint256", "name": "round", "type": "uint256"}
+    ],
+    "name": "getRoundDeadline",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "groupId", "type": "uint256"},
       {"internalType": "uint256", "name": "round", "type": "uint256"},
       {"internalType": "address", "name": "member", "type": "address"}
     ],
@@ -65,6 +85,30 @@ TONTINE_ABI = json.loads("""
     ],
     "name": "getMemberNonce",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "groupId", "type": "uint256"},
+      {"internalType": "uint256", "name": "round", "type": "uint256"}
+    ],
+    "name": "getPaidCount",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "groupId", "type": "uint256"}],
+    "name": "getMembers",
+    "outputs": [{"internalType": "address[]", "name": "", "type": "address[]"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "groupId", "type": "uint256"}],
+    "name": "isRoundOpen",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
     "stateMutability": "view",
     "type": "function"
   }
